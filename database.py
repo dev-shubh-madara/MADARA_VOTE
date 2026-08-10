@@ -527,14 +527,17 @@ class Database:
             row = await cur.fetchone()
             return dict(row) if row else None
 
-    async def update_payment_status(self, payment_id: int, status: str, reviewed_by: int) -> None:
+    async def update_payment_status(self, payment_id: int, status: str, reviewed_by: int) -> bool:
+        """Only transitions a still-pending payment. Returns True if this call actually
+        changed the status (guards against double-tap approve/deny races)."""
         async with self._open() as db:
             await self._setup(db)
-            await db.execute(
-                "UPDATE Payments SET status=?, reviewed_by=?, reviewed_at=? WHERE id=?",
+            cur = await db.execute(
+                "UPDATE Payments SET status=?, reviewed_by=?, reviewed_at=? WHERE id=? AND status='pending'",
                 (status, reviewed_by, self.now(), payment_id),
             )
             await db.commit()
+            return cur.rowcount > 0
 
     async def add_manual_votes(self, participant_id: int, amount: int) -> None:
         async with self._open() as db:

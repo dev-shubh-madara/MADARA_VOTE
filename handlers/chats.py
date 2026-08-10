@@ -6,6 +6,7 @@ from aiogram.types import CallbackQuery, Message
 
 from database import Database
 from keyboards.main_menu import back_to_menu_kb
+from utils.common import esc
 
 router = Router(name="chats")
 
@@ -61,8 +62,8 @@ async def save_forwarded_chat(message: Message, db: Database) -> None:
     icon = "📢" if chat.type == "channel" else "👥"
     await message.answer(
         f"✅ <b>{icon} {chat.type.title()} Added!</b>\n\n"
-        f"📌 <b>Name:</b> {chat.title}\n"
+        f"📌 <b>Name:</b> {esc(chat.title)}\n"
         f"🆔 <b>ID:</b> <code>{chat.id}</code>\n"
-        f"🔗 <b>Username:</b> {'@' + chat.username if chat.username else 'Private'}",
+        f"🔗 <b>Username:</b> {'@' + esc(chat.username) if chat.username else 'Private'}",
         reply_markup=back_to_menu_kb(),
     )

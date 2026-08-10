@@ -1,7 +1,16 @@
 from __future__ import annotations
 
+import html
+
 from aiogram import Bot
 from aiogram.enums import ChatMemberStatus
+
+
+def esc(text: str | None) -> str:
+    """Escape user-supplied text so it can't break or inject HTML parse-mode messages."""
+    if not text:
+        return ""
+    return html.escape(str(text), quote=False)
 
 
 def parse_channel_input(raw: str) -> tuple[str, int]:
@@ -36,9 +45,9 @@ async def ensure_channel_membership(bot: Bot, channel_id: int, user_id: int) -> 
 
 def display_name(username: str | None, full_name: str | None, user_id: int) -> str:
     if username:
-        return f"@{username}"
+        return f"@{esc(username)}"
     if full_name:
-        return full_name
+        return esc(full_name)
     return str(user_id)
 
 

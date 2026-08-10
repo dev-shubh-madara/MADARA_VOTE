@@ -9,7 +9,7 @@ from aiogram.types import CallbackQuery, Message
 
 from config import Settings
 from database import Database
-from keyboards.main_menu import admin_panel_kb, back_to_menu_kb, broadcast_confirm_kb
+from keyboards.main_menu import admin_panel_kb, back_to_menu_kb, broadcast_confirm_kb, participant_vote_kb
 from states.admin import BroadcastState, AdminState
 from utils.fonts import mf
 
@@ -81,12 +81,31 @@ async def admin_broadcast_prompt(callback: CallbackQuery, db: Database, state: F
     )
 
 
+@router.message(BroadcastState.message, F.text == "/cancel")
+async def admin_broadcast_cancel_input(message: Message, state: FSMContext) -> None:
+    await state.clear()
+    await message.answer(mf("❌ <b>Broadcast cancelled.</b>"), reply_markup=admin_panel_kb())
+
+
+@router.message(BroadcastState.message, F.photo)
+async def admin_broadcast_preview_photo(message: Message, state: FSMContext) -> None:
+    text = message.caption or ""
+    await state.update_data(broadcast_text=text, broadcast_photo=message.photo[-1].file_id)
+    await state.set_state(BroadcastState.confirm)
+    await message.answer_photo(
+        message.photo[-1].file_id,
+        caption=mf(f"📋 <b>Broadcast Preview:</b>\n\n<blockquote>{text or '(no caption)'}</blockquote>\n\nConfirm sending this to all users?"),
+        reply_markup=broadcast_confirm_kb(),
+    )
+
+
 @router.message(BroadcastState.message)
 async def admin_broadcast_preview(message: Message, state: FSMContext) -> None:
-    await state.update_data(broadcast_text=message.text, broadcast_photo=None)
+    text = message.text or ""
+    await state.update_data(broadcast_text=text, broadcast_photo=None)
     await state.set_state(BroadcastState.confirm)
     await message.answer(
-        mf(f"📋 <b>Broadcast Preview:</b>\n\n<blockquote>{message.text}</blockquote>\n\nConfirm sending this to all users?"),
+        mf(f"📋 <b>Broadcast Preview:</b>\n\n<blockquote>{text}</blockquote>\n\nConfirm sending this to all users?"),
         reply_markup=broadcast_confirm_kb(),
     )
 
@@ -100,6 +119,7 @@ async def admin_broadcast_send(callback: CallbackQuery, db: Database, state: FSM
     await callback.answer("📤 Broadcasting...", show_alert=False)
 
     text = data.get("broadcast_text", "")
+    photo = data.get("broadcast_photo")
     user_ids = await db.get_all_user_ids()
     sent = 0
     failed = 0
@@ -110,10 +130,16 @@ async def admin_broadcast_send(callback: CallbackQuery, db: Database, state: FSM
 
     for i, uid in enumerate(user_ids):
         try:
-            await callback.bot.send_message(uid, text)
+            if photo:
+                await callback.bot.send_photo(uid, photo, caption=text or None)
+            else:
+                await callback.bot.send_message(uid, text)
             sent += 1
         except Exception:
             failed += 1
+        # Stay under Telegram's ~30 msgs/sec global rate limit so sends don't get
+        # throttled and miscounted as failures.
+        await asyncio.sleep(0.04)
         if (i + 1) % 20 == 0:
             try:
                 await status_msg.edit_text(
@@ -121,7 +147,6 @@ async def admin_broadcast_send(callback: CallbackQuery, db: Database, state: FSM
                 )
             except Exception:
                 pass
-            await asyncio.sleep(0.05)
 
     await db.save_broadcast(callback.from_user.id, text, len(user_ids), sent)
     await status_msg.edit_text(
@@ -303,7 +328,28 @@ async def addvote_cmd(message: Message, db: Database) -> None:
     except ValueError:
         await message.answer(mf("❌ <b>Invalid participant ID or amount.</b>"))
         return
+
+    participant = await db.get_participant_by_id(participant_id)
+    if not participant:
+        await message.answer(mf("❌ <b>No participant found with that ID.</b>"))
+        return
+
     await db.add_manual_votes(participant_id, amount)
+
+    # Keep the public vote count on the channel post in sync.
+    if participant.get("post_message_id"):
+        new_count = await db.participant_votes(participant_id)
+        giveaway = await db.get_giveaway(participant["giveaway_id"])
+        if giveaway:
+            try:
+                await message.bot.edit_message_reply_markup(
+                    chat_id=giveaway.channel_id,
+                    message_id=participant["post_message_id"],
+                    reply_markup=participant_vote_kb(participant["giveaway_id"], participant_id, new_count),
+                )
+            except Exception:
+                pass
+
     await message.answer(mf(f"✅ Added <b>{amount}</b> votes to participant <code>{participant_id}</code>."))
 
 

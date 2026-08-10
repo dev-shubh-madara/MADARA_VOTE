@@ -24,7 +24,7 @@ from keyboards.main_menu import (
 )
 from states.giveaway import NewGiveawayState
 from states.payment import PaymentState
-from utils.common import display_name, ensure_channel_membership, medal, parse_channel_input
+from utils.common import display_name, ensure_channel_membership, esc, medal, parse_channel_input
 from utils.fonts import mf
 
 router = Router(name="giveaway")
@@ -54,7 +54,7 @@ async def new_giveaway_title(message: Message, state: FSMContext) -> None:
     if len(title) < 3:
         await message.answer(mf("❌ <b>Title too short.</b> Please enter at least 3 characters."))
         return
-    await state.update_data(title=title)
+    await state.update_data(title=esc(title))
     await state.set_state(NewGiveawayState.channel)
     await message.answer(
         mf(
@@ -88,7 +88,7 @@ async def new_giveaway_channel(message: Message, state: FSMContext) -> None:
         await message.answer(mf("❌ <b>Bot is not an admin</b> in this channel. Please add it first."))
         return
 
-    await state.update_data(channel_username=username, channel_id=channel_id)
+    await state.update_data(channel_username=esc(username), channel_id=channel_id)
     await state.set_state(NewGiveawayState.giveaway_type)
     await message.answer(
         mf(
@@ -172,10 +172,10 @@ async def new_giveaway_payment_info(message: Message, state: FSMContext) -> None
     value = (message.text or "").strip()
 
     if sub == "upi":
-        await state.update_data(upi_id=value, qr_file_id=None, stars_username=None)
+        await state.update_data(upi_id=esc(value), qr_file_id=None, stars_username=None)
     else:
         stars_username = value.lstrip("@")
-        await state.update_data(stars_username=f"@{stars_username}", upi_id=None, qr_file_id=None)
+        await state.update_data(stars_username=f"@{esc(stars_username)}", upi_id=None, qr_file_id=None)
 
     await state.set_state(NewGiveawayState.referral_setup)
     await message.answer(
@@ -807,7 +807,7 @@ async def payment_screenshot(message: Message, state: FSMContext) -> None:
 
 @router.message(PaymentState.ref)
 async def payment_ref(message: Message, state: FSMContext) -> None:
-    await state.update_data(ref=(message.text or "").strip())
+    await state.update_data(ref=esc((message.text or "").strip()))
     await state.set_state(PaymentState.amount)
     await message.answer(
         mf("💰 <b>Amount</b>\n\n<blockquote>How much did you pay? (Enter the amount as a number)</blockquote>")
@@ -885,7 +885,10 @@ async def payment_approve(callback: CallbackQuery, db: Database) -> None:
         await callback.answer("Host only!", show_alert=True)
         return
 
-    await db.update_payment_status(pid, "approved", callback.from_user.id)
+    changed = await db.update_payment_status(pid, "approved", callback.from_user.id)
+    if not changed:
+        await callback.answer("⚠️ This payment was already reviewed.", show_alert=True)
+        return
 
     votes = max(1, payment["amount"])
     await db.add_manual_votes(payment["participant_id"], votes)
@@ -937,7 +940,10 @@ async def payment_deny(callback: CallbackQuery, db: Database) -> None:
         await callback.answer("Host only!", show_alert=True)
         return
 
-    await db.update_payment_status(pid, "denied", callback.from_user.id)
+    changed = await db.update_payment_status(pid, "denied", callback.from_user.id)
+    if not changed:
+        await callback.answer("⚠️ This payment was already reviewed.", show_alert=True)
+        return
 
     try:
         await callback.bot.send_message(

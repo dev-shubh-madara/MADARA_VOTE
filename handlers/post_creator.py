@@ -4,6 +4,7 @@ from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message
 
+from database import Database
 from keyboards.main_menu import back_to_menu_kb
 from states.post_creator import PostCreatorState
 from utils.fonts import mf, btn
@@ -127,7 +128,7 @@ async def _show_preview(message: Message, state: FSMContext) -> None:
 
 
 @router.message(PostCreatorState.confirm)
-async def post_send(message: Message, state: FSMContext) -> None:
+async def post_send(message: Message, state: FSMContext, db: Database) -> None:
     target = (message.text or "").strip()
     if target == "/cancel":
         await state.clear()
@@ -145,6 +146,25 @@ async def post_send(message: Message, state: FSMContext) -> None:
         chat_id = int(target)
     else:
         chat_id = target if target.startswith("@") else f"@{target}"
+
+    # Only allow posting to chats this user has actually added (proven admin via forward check).
+    owned_chats = await db.list_user_chats(message.from_user.id)
+    target_username = str(chat_id).lstrip("@").lower() if isinstance(chat_id, str) else None
+    is_owned = any(
+        (isinstance(chat_id, int) and c["chat_id"] == chat_id)
+        or (target_username and (c.get("chat_username") or "").lower() == target_username)
+        for c in owned_chats
+    )
+    if not is_owned:
+        await message.answer(
+            mf(
+                "❌ <b>You can only post to channels/groups you've added</b> via "
+                "<b>➕ Add Channel</b> (forward a message from it first).\n\n"
+                "This prevents posting to chats you don't actually control."
+            ),
+            reply_markup=back_to_menu_kb(),
+        )
+        return
 
     try:
         if photo:

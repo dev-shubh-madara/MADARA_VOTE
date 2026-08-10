@@ -61,19 +61,19 @@ async def _play_intro(message: Message) -> None:
 
 def _intro_text(settings: Settings) -> str:
     return mf(
-        "🎉 <b>Welcome to the Giveaway Manager Bot!</b>\n\n"
-        "🏆 <b>The Most Advanced Giveaway Bot on Telegram</b>\n\n"
+        "<emoji id=6041731551845159060>🎉</emoji> <b>Welcome to the Giveaway Manager Bot!</b>\n\n"
+        "<emoji id=6194737030165959506>🏆</emoji> <b>The Most Advanced Giveaway Bot on Telegram</b>\n\n"
         "<blockquote>"
-        "✨ <b>Features:</b>\n"
-        "├ 🗳 Voting Contests &amp; 🎰 Lucky Draws\n"
-        "├ 💰 Paid Votes (UPI / Telegram Stars)\n"
-        "├ 🔗 Referral Bonus System\n"
-        "├ 📊 Live Leaderboards\n"
-        "├ 🛡 Anti-Cheat Protection\n"
-        "└ 📢 Channel Post Creator"
+        "<emoji id=5890925363067886150>✨</emoji> <b>Features:</b>\n"
+        "├ <emoji id=5258200019495821936>🗳</emoji> Voting Contests &amp; 🎰 Lucky Draws\n"
+        "├ <emoji id=6100530805178634500>💰</emoji> Paid Votes (UPI / Telegram Stars)\n"
+        "├ <emoji id=5409257566939134596>🔗</emoji> Referral Bonus System\n"
+        "├ <emoji id=6100593065024562684>📊</emoji> Live Leaderboards\n"
+        "├ <emoji id=5409194306365829029>🛡</emoji> Anti-Cheat Protection\n"
+        "└ <emoji id=6039381989985882045>📢</emoji> Channel Post Creator"
         "</blockquote>\n\n"
-        f"🔹 {settings.powered_by_text}\n"
-        f"🆘 Support: {settings.support_link}"
+        f"<emoji id=5891105528356018797>🔹</emoji> {settings.powered_by_text}\n"
+        f"<emoji id=6219686383519273072>🔗</emoji> Support: {settings.support_link}"
     )
 
 

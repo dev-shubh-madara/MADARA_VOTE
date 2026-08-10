@@ -13,7 +13,8 @@ load_dotenv()
 class Settings:
     bot_token: str
     bot_username: str
-    database_path: str
+    mongodb_uri: str
+    mongodb_db_name: str
     support_link: str
     powered_by_text: str
     banner_url: str
@@ -35,10 +36,15 @@ def load_settings() -> Settings:
     if not token:
         raise ValueError("BOT_TOKEN is required")
 
+    mongodb_uri = os.getenv("MONGODB_URI", "").strip()
+    if not mongodb_uri:
+        raise ValueError("MONGODB_URI is required")
+
     return Settings(
         bot_token=token,
         bot_username=username,
-        database_path=os.getenv("DATABASE_PATH", "giveaway.db"),
+        mongodb_uri=mongodb_uri,
+        mongodb_db_name=os.getenv("MONGODB_DB_NAME", "madara_vote"),
         support_link=os.getenv("SUPPORT_LINK", "https://t.me/example_support"),
         powered_by_text=os.getenv("POWERED_BY_TEXT", "Powered by Giveaway Bot"),
         banner_url=os.getenv("BANNER_URL", "https://picsum.photos/1024/512"),

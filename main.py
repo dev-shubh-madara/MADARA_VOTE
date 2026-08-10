@@ -21,7 +21,7 @@ def setup_logging(level: str) -> None:
 
 
 async def build_dispatcher(settings: Settings) -> tuple[Dispatcher, Database]:
-    db = Database(settings.database_path)
+    db = Database(settings.mongodb_uri, settings.mongodb_db_name)
     await db.init()
     for owner_id in settings.owner_ids:
         await db.ensure_user(owner_id, None, f"owner_{owner_id}", is_admin=True)

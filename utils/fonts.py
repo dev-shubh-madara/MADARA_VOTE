@@ -88,4 +88,3 @@ def mf(html: str) -> str:
                 result.append(part.translate(_MSG_TABLE))
 
     return "".join(result)
-```

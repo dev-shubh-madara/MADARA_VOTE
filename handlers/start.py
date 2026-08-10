@@ -1,9 +1,12 @@
+```python
 from __future__ import annotations
 
 import asyncio
 import random
+import re
 
 from aiogram import F, Router
+from aiogram.enums import ParseMode
 from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
@@ -25,33 +28,124 @@ _LOADING_FRAMES = [
 ]
 
 
+def _fix_custom_emojis(text: str) -> str:
+    """
+    Telegram HTML does NOT support <emoji>.
+    
+    Convert:
+        <emoji id="123">🎉</emoji>
+    
+    into:
+        <tg-emoji emoji-id="123">🎉</tg-emoji>
+    
+    Also supports:
+        <emoji emoji-id="123">🎉</emoji>
+    """
+
+    if not text:
+        return text
+
+    # <emoji id="123">...</emoji>
+    text = re.sub(
+        r'<emoji\s+id=["\'](\d+)["\']\s*>(.*?)</emoji>',
+        r'<tg-emoji emoji-id="\1">\2</tg-emoji>',
+        text,
+        flags=re.IGNORECASE | re.DOTALL,
+    )
+
+    # <emoji emoji-id="123">...</emoji>
+    text = re.sub(
+        r'<emoji\s+emoji-id=["\'](\d+)["\']\s*>(.*?)</emoji>',
+        r'<tg-emoji emoji-id="\1">\2</tg-emoji>',
+        text,
+        flags=re.IGNORECASE | re.DOTALL,
+    )
+
+    # <emoji id=123>...</emoji>
+    text = re.sub(
+        r'<emoji\s+id=(\d+)\s*>(.*?)</emoji>',
+        r'<tg-emoji emoji-id="\1">\2</tg-emoji>',
+        text,
+        flags=re.IGNORECASE | re.DOTALL,
+    )
+
+    # If an unsupported plain <emoji> remains, remove the tags
+    # but preserve the emoji/text inside.
+    text = re.sub(
+        r'<emoji[^>]*>',
+        "",
+        text,
+        flags=re.IGNORECASE,
+    )
+
+    text = re.sub(
+        r'</emoji>',
+        "",
+        text,
+        flags=re.IGNORECASE,
+    )
+
+    return text
+
+
+def _safe_text(text: str) -> str:
+    """
+    Run your existing font/custom-emoji formatter,
+    then make the result Telegram HTML compatible.
+    """
+    try:
+        formatted = mf(text)
+    except Exception:
+        formatted = text
+
+    return _fix_custom_emojis(formatted)
+
+
 async def _play_intro(message: Message) -> None:
-    """Sticker → delete after 2s → loading bar animation → delete → main msg."""
-    # ── Step 1: random sticker ────────────────────────────────────────────────
+    """Sticker → delete after 2s → loading animation → delete."""
+
+    # ── Step 1: random sticker ─────────────────────────────────────────────
     sticker_msg = None
+
     try:
         pack = await message.bot.get_sticker_set(_STICKER_PACK)
         stk = random.choice(pack.stickers)
+
         sticker_msg = await message.answer_sticker(stk.file_id)
+
         await asyncio.sleep(2)
+
     except Exception:
         pass
+
     if sticker_msg:
         try:
             await sticker_msg.delete()
         except Exception:
             pass
 
-    # ── Step 2: loading bar ───────────────────────────────────────────────────
+    # ── Step 2: loading bar ────────────────────────────────────────────────
     anim_msg = None
+
     try:
-        anim_msg = await message.answer(f"<code>{_LOADING_FRAMES[0]}</code>")
+        anim_msg = await message.answer(
+            f"<code>{_LOADING_FRAMES[0]}</code>",
+            parse_mode=ParseMode.HTML,
+        )
+
         for frame in _LOADING_FRAMES[1:]:
             await asyncio.sleep(0.2)
-            await anim_msg.edit_text(f"<code>{frame}</code>")
+
+            await anim_msg.edit_text(
+                f"<code>{frame}</code>",
+                parse_mode=ParseMode.HTML,
+            )
+
         await asyncio.sleep(0.5)
+
     except Exception:
         pass
+
     if anim_msg:
         try:
             await anim_msg.delete()
@@ -60,22 +154,24 @@ async def _play_intro(message: Message) -> None:
 
 
 def _intro_text(settings: Settings) -> str:
-    return mf(
-        "<emoji id=6041731551845159060>🎉</emoji> <b>Welcome to the Giveaway Manager Bot!</b>\n\n"
-        "<emoji id=6194737030165959506>🏆</emoji> <b>The Most Advanced Giveaway Bot on Telegram</b>\n\n"
-        "<blockquote>"
-        "<emoji id=5890925363067886150>✨</emoji> <b>Features:</b>\n"
-        "├ <emoji id=5258200019495821936>🗳</emoji> Voting Contests &amp; 🎰 Lucky Draws\n"
-        "├ <emoji id=6100530805178634500>💰</emoji> Paid Votes (UPI / Telegram Stars)\n"
-        "├ <emoji id=5409257566939134596>🔗</emoji> Referral Bonus System\n"
-        "├ <emoji id=6100593065024562684>📊</emoji> Live Leaderboards\n"
-        "├ <emoji id=5409194306365829029>🛡</emoji> Anti-Cheat Protection\n"
-        "└ <emoji id=6039381989985882045>📢</emoji> Channel Post Creator"
-        "</blockquote>\n\n"
-        f"<emoji id=5891105528356018797>🔹</emoji> {settings.powered_by_text}\n"
-        f"<emoji id=6219686383519273072>🔗</emoji> Support: {settings.support_link}"
+    return _safe_text(
+        "🎉 Welcome to the Giveaway Manager Bot!\n\n"
+        "🏆 The Most Advanced Giveaway Bot on Telegram\n\n"
+        "✨ Features:\n"
+        "├ 🗳 Voting Contests & 🎰 Lucky Draws\n"
+        "├ 💰 Paid Votes (UPI / Telegram Stars)\n"
+        "├ 🔗 Referral Bonus System\n"
+        "├ 📊 Live Leaderboards\n"
+        "├ 🛡 Anti-Cheat Protection\n"
+        "└ 📢 Channel Post Creator\n\n"
+        f"🔹 {settings.powered_by_text}\n"
+        f"🔗 Support: {settings.support_link}"
     )
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+# START DEEP LINK
+# ─────────────────────────────────────────────────────────────────────────────
 
 @router.message(CommandStart(deep_link=True))
 async def start_deeplink(
@@ -85,41 +181,73 @@ async def start_deeplink(
     settings: Settings,
     state: FSMContext,
 ) -> None:
+
     await db.ensure_user(
         message.from_user.id,
         message.from_user.username,
         message.from_user.full_name or "",
     )
+
     await state.clear()
+
     arg = command.args or ""
 
     if arg.startswith("giveaway_"):
         parts = arg.replace("giveaway_", "").split("_ref_")
+
         giveaway_id = int(parts[0])
         referrer_id = int(parts[1]) if len(parts) > 1 else None
+
         from handlers.giveaway import process_participation_link
-        await process_participation_link(message, db, settings, giveaway_id, referrer_id)
+
+        await process_participation_link(
+            message,
+            db,
+            settings,
+            giveaway_id,
+            referrer_id,
+        )
+
         return
 
     # Deep link but not giveaway → run full intro
     await _play_intro(message)
+
     try:
         await message.answer_photo(
             settings.banner_url,
             caption=_intro_text(settings),
             reply_markup=main_menu_kb(),
+            parse_mode=ParseMode.HTML,
         )
-    except Exception:
-        await message.answer(_intro_text(settings), reply_markup=main_menu_kb())
 
+    except Exception:
+        # Fallback if banner/photo fails
+        await message.answer(
+            _intro_text(settings),
+            reply_markup=main_menu_kb(),
+            parse_mode=ParseMode.HTML,
+        )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# NORMAL /START
+# ─────────────────────────────────────────────────────────────────────────────
 
 @router.message(CommandStart())
-async def start_root(message: Message, db: Database, settings: Settings, state: FSMContext) -> None:
+async def start_root(
+    message: Message,
+    db: Database,
+    settings: Settings,
+    state: FSMContext,
+) -> None:
+
     await db.ensure_user(
         message.from_user.id,
         message.from_user.username,
         message.from_user.full_name or "",
     )
+
     await state.clear()
 
     await _play_intro(message)
@@ -129,97 +257,160 @@ async def start_root(message: Message, db: Database, settings: Settings, state: 
             settings.banner_url,
             caption=_intro_text(settings),
             reply_markup=main_menu_kb(),
+            parse_mode=ParseMode.HTML,
         )
-    except Exception:
-        await message.answer(_intro_text(settings), reply_markup=main_menu_kb())
 
+    except Exception:
+        # Fallback if banner/photo fails
+        await message.answer(
+            _intro_text(settings),
+            reply_markup=main_menu_kb(),
+            parse_mode=ParseMode.HTML,
+        )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# MAIN MENU
+# ─────────────────────────────────────────────────────────────────────────────
 
 @router.callback_query(F.data == "menu:root")
-async def menu_root(callback: CallbackQuery, settings: Settings, state: FSMContext) -> None:
+async def menu_root(
+    callback: CallbackQuery,
+    settings: Settings,
+    state: FSMContext,
+) -> None:
+
     await state.clear()
     await callback.answer()
+
+    text = _intro_text(settings)
+
     try:
         await callback.message.edit_caption(
-            caption=_intro_text(settings),
+            caption=text,
             reply_markup=main_menu_kb(),
+            parse_mode=ParseMode.HTML,
         )
-    except Exception:
-        try:
-            await callback.message.edit_text(_intro_text(settings), reply_markup=main_menu_kb())
-        except Exception:
-            await callback.message.answer(_intro_text(settings), reply_markup=main_menu_kb())
 
+    except Exception:
+
+        try:
+            await callback.message.edit_text(
+                text,
+                reply_markup=main_menu_kb(),
+                parse_mode=ParseMode.HTML,
+            )
+
+        except Exception:
+
+            await callback.message.answer(
+                text,
+                reply_markup=main_menu_kb(),
+                parse_mode=ParseMode.HTML,
+            )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# HOW TO USE
+# ─────────────────────────────────────────────────────────────────────────────
 
 @router.callback_query(F.data == "menu:how_to_use")
 async def how_to_use(callback: CallbackQuery) -> None:
+
     await callback.answer()
-    text = mf(
-        "📖 <b>How To Use This Bot</b>\n\n"
-        "<blockquote>"
-        "<b>1️⃣ Create a Giveaway</b>\n"
-        "   • Click <b>New Giveaway</b> and follow the steps\n"
-        "   • Choose between <b>Voting Contest</b> or <b>Lucky Draw</b>\n"
-        "   • Set Free or Paid mode"
-        "</blockquote>\n\n"
-        "<blockquote>"
-        "<b>2️⃣ Share The Link</b>\n"
+
+    text = _safe_text(
+        "📖 How To Use This Bot\n\n"
+
+        "1️⃣ Create a Giveaway\n"
+        "   • Click New Giveaway and follow the steps\n"
+        "   • Choose between Voting Contest or Lucky Draw\n"
+        "   • Set Free or Paid mode\n\n"
+
+        "2️⃣ Share The Link\n"
         "   • Share your giveaway participation link\n"
-        "   • Participants join via the deep link"
-        "</blockquote>\n\n"
-        "<blockquote>"
-        "<b>3️⃣ Voting</b>\n"
+        "   • Participants join via the deep link\n\n"
+
+        "3️⃣ Voting\n"
         "   • Channel subscribers can vote for participants\n"
         "   • Each subscriber can vote once per giveaway\n"
-        "   • Votes are removed if the voter leaves the channel"
-        "</blockquote>\n\n"
-        "<blockquote>"
-        "<b>4️⃣ Paid Votes</b>\n"
-        "   • Participants can buy extra votes via UPI or Stars\n"
-        "   • You (host) approve/deny payment screenshots"
-        "</blockquote>\n\n"
-        "<blockquote>"
-        "<b>5️⃣ Referral System</b>\n"
-        "   • Enable referrals so participants earn bonus votes\n"
-        "   • Each friend they invite = bonus votes"
-        "</blockquote>\n\n"
-        "<blockquote>"
-        "<b>6️⃣ End Giveaway</b>\n"
-        "   • Click <b>End Giveaway</b> to announce the winner\n"
-        "   • Winner is announced in the channel automatically"
-        "</blockquote>"
-    )
-    await callback.message.answer(text, reply_markup=back_to_menu_kb())
+        "   • Votes are removed if the voter leaves the channel\n\n"
 
+        "4️⃣ Paid Votes\n"
+        "   • Participants can buy extra votes via UPI or Stars\n"
+        "   • You (host) approve/deny payment screenshots\n\n"
+
+        "5️⃣ Referral System\n"
+        "   • Enable referrals so participants earn bonus votes\n"
+        "   • Each friend they invite = bonus votes\n\n"
+
+        "6️⃣ End Giveaway\n"
+        "   • Click End Giveaway to announce the winner\n"
+        "   • Winner is announced in the channel automatically"
+    )
+
+    await callback.message.answer(
+        text,
+        reply_markup=back_to_menu_kb(),
+        parse_mode=ParseMode.HTML,
+    )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# DONATE
+# ─────────────────────────────────────────────────────────────────────────────
 
 @router.callback_query(F.data == "menu:donate")
-async def donate(callback: CallbackQuery, settings: Settings) -> None:
+async def donate(
+    callback: CallbackQuery,
+    settings: Settings,
+) -> None:
+
     await callback.answer()
+
+    caption = _safe_text(
+        "💖 Support This Bot\n\n"
+        "Your support helps keep this bot running and free!\n"
+        "Scan the QR code above to donate. Thank you! 🙏"
+    )
+
     try:
         await callback.message.answer_photo(
             settings.donate_qr,
-            caption=mf(
-                "💖 <b>Support This Bot</b>\n\n"
-                "<blockquote>"
-                "Your support helps keep this bot running and free!\n"
-                "Scan the QR code above to donate. Thank you! 🙏"
-                "</blockquote>"
-            ),
+            caption=caption,
             reply_markup=back_to_menu_kb(),
+            parse_mode=ParseMode.HTML,
         )
+
     except Exception:
         await callback.message.answer(
-            mf("💖 <b>Thank you for supporting this bot!</b>"),
+            _safe_text("💖 Thank you for supporting this bot!"),
             reply_markup=back_to_menu_kb(),
+            parse_mode=ParseMode.HTML,
         )
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# SUPPORT
+# ─────────────────────────────────────────────────────────────────────────────
+
 @router.callback_query(F.data == "menu:support")
-async def support(callback: CallbackQuery, settings: Settings) -> None:
+async def support(
+    callback: CallbackQuery,
+    settings: Settings,
+) -> None:
+
     await callback.answer()
-    await callback.message.answer(
-        mf(
-            f"🆘 <b>Support</b>\n\n"
-            f"<blockquote>Need help? Contact us:\n{settings.support_link}</blockquote>"
-        ),
-        reply_markup=back_to_menu_kb(),
+
+    text = _safe_text(
+        f"🆘 Support\n\n"
+        f"Need help? Contact us:\n"
+        f"{settings.support_link}"
     )
+
+    await callback.message.answer(
+        text,
+        reply_markup=back_to_menu_kb(),
+        parse_mode=ParseMode.HTML,
+    )
+```

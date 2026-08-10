@@ -1,11 +1,6 @@
-```python
 from __future__ import annotations
 
 import re
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Button font: ɱყ ℓσя∂ style
-# ─────────────────────────────────────────────────────────────────────────────
 
 _BTN_FROM = "abcdefghijklmnopqrstuvwxyz"
 _BTN_TO = "αbc∂єfgɦιjκℓɱησρqяsτυvωxყz"
@@ -13,13 +8,9 @@ _BTN_TABLE = str.maketrans(_BTN_FROM, _BTN_TO)
 
 
 def btn(text: str) -> str:
-    """Convert button label to ɱყ ℓσя∂ fancy Unicode style."""
+    """Convert button label to fancy Unicode style."""
     return text.lower().translate(_BTN_TABLE)
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Message font: 𝐒ʏsᴛᴇᴍ 𝐎ɴʟɪɴᴇ style
-# ─────────────────────────────────────────────────────────────────────────────
 
 _MSG_TABLE = str.maketrans({
     "A": "𝐀", "B": "𝐁", "C": "𝐂", "D": "𝐃", "E": "𝐄", "F": "𝐅",
@@ -27,7 +18,6 @@ _MSG_TABLE = str.maketrans({
     "M": "𝐌", "N": "𝐍", "O": "𝐎", "P": "𝐏", "Q": "𝐐", "R": "𝐑",
     "S": "𝐒", "T": "𝐓", "U": "𝐔", "V": "𝐕", "W": "𝐖", "X": "𝐗",
     "Y": "𝐘", "Z": "𝐙",
-
     "a": "ᴀ", "b": "ʙ", "c": "ᴄ", "d": "ᴅ", "e": "ᴇ", "f": "ꜰ",
     "g": "ɢ", "h": "ʜ", "i": "ɪ", "j": "ᴊ", "k": "ᴋ", "l": "ʟ",
     "m": "ᴍ", "n": "ɴ", "o": "ᴏ", "p": "ᴘ", "q": "ǫ", "r": "ʀ",
@@ -36,31 +26,11 @@ _MSG_TABLE = str.maketrans({
 })
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Custom / Premium Emoji Converter
-# ─────────────────────────────────────────────────────────────────────────────
-
 def _convert_custom_emojis(text: str) -> str:
-    """
-    Convert unsupported <emoji> tags to Telegram's supported <tg-emoji> tags.
-
-    Supported input formats:
-
-        <emoji id="123456789">🎉</emoji>
-
-        <emoji emoji-id="123456789">🎉</emoji>
-
-        <emoji id='123456789'>🎉</emoji>
-
-    Output:
-
-        <tg-emoji emoji-id="123456789">🎉</tg-emoji>
-    """
-
     if not text:
         return text
 
-    # <emoji id="123">...</emoji>
+    # <emoji id="123">🎉</emoji>
     text = re.sub(
         r'<emoji\s+id=["\'](\d+)["\']\s*>(.*?)</emoji>',
         r'<tg-emoji emoji-id="\1">\2</tg-emoji>',
@@ -68,7 +38,7 @@ def _convert_custom_emojis(text: str) -> str:
         flags=re.IGNORECASE | re.DOTALL,
     )
 
-    # <emoji emoji-id="123">...</emoji>
+    # <emoji emoji-id="123">🎉</emoji>
     text = re.sub(
         r'<emoji\s+emoji-id=["\'](\d+)["\']\s*>(.*?)</emoji>',
         r'<tg-emoji emoji-id="\1">\2</tg-emoji>',
@@ -76,7 +46,7 @@ def _convert_custom_emojis(text: str) -> str:
         flags=re.IGNORECASE | re.DOTALL,
     )
 
-    # <emoji id=123>...</emoji>
+    # <emoji id=123>🎉</emoji>
     text = re.sub(
         r'<emoji\s+id=(\d+)\s*>(.*?)</emoji>',
         r'<tg-emoji emoji-id="\1">\2</tg-emoji>',
@@ -87,61 +57,35 @@ def _convert_custom_emojis(text: str) -> str:
     return text
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Message Font
-# ─────────────────────────────────────────────────────────────────────────────
-
 def mf(html: str) -> str:
-    """
-    Apply 𝐒ʏsᴛᴇᴍ font to text outside HTML tags.
-
-    HTML tags are preserved.
-
-    Custom Telegram Premium emoji tags are automatically converted from:
-
-        <emoji id="123">🎉</emoji>
-
-    to:
-
-        <tg-emoji emoji-id="123">🎉</tg-emoji>
-    """
+    """Apply message font while preserving HTML and custom emojis."""
 
     if not html:
         return html
 
-    # First convert unsupported custom emoji tags.
     html = _convert_custom_emojis(html)
 
-    # Split HTML into tags and normal text.
     parts = re.split(r"(<[^>]+>)", html)
 
-    result: list[str] = []
-
+    result = []
     inside_code = False
 
     for part in parts:
-
-        # HTML tag
         if part.startswith("<") and part.endswith(">"):
             result.append(part)
 
             low = part.lower()
 
-            # Start of <code>
             if re.match(r"<code(?:\s[^>]*)?>", low):
                 inside_code = True
-
-            # End of </code>
             elif low == "</code>":
                 inside_code = False
 
-            continue
-
-        # Normal text
-        if inside_code:
-            result.append(part)
         else:
-            result.append(part.translate(_MSG_TABLE))
+            if inside_code:
+                result.append(part)
+            else:
+                result.append(part.translate(_MSG_TABLE))
 
     return "".join(result)
 ```

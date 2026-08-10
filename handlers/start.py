@@ -1,4 +1,4 @@
-```python
+
 from __future__ import annotations
 
 import asyncio
@@ -413,4 +413,4 @@ async def support(
         reply_markup=back_to_menu_kb(),
         parse_mode=ParseMode.HTML,
     )
-```
+

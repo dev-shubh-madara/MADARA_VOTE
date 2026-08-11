@@ -35,7 +35,7 @@ async def create_post_start(callback: CallbackQuery, state: FSMContext) -> None:
         mf(
             "📝 <b>Post Creator</b>\n\n"
             "<blockquote>"
-            "Step 1️⃣ — Send a <b>photo</b> for your post.\n"
+            "Step {pe('one', '✨')} — Send a <b>photo</b> for your post.\n"
             "Or tap /skip for a text-only post."
             "</blockquote>"
         ),

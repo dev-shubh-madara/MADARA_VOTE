@@ -13,7 +13,8 @@ def main_menu_kb() -> InlineKeyboardMarkup:
         [
             InlineKeyboardButton(text=btn("🎁 New Giveaway"), callback_data="menu:new_giveaway",
                                   style=ButtonStyle.PRIMARY, icon_custom_emoji_id=eid("rocket")),
-            InlineKeyboardButton(text=btn("📋 My Giveaways"), callback_data="menu:my_giveaways"),
+            InlineKeyboardButton(text=btn("📋 My Giveaways"), callback_data="menu:my_giveaways",
+                                  style=ButtonStyle.DANGER, icon_custom_emoji_id=eid("fire")),
         ],
         [
             InlineKeyboardButton(text=btn("➕ Add Channel"), callback_data="menu:add_channel"),

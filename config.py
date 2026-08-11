@@ -63,7 +63,7 @@ def load_settings() -> Settings:
         mongodb_db_name=os.getenv("MONGODB_DB_NAME", "madara_vote"),
         support_link=os.getenv("SUPPORT_LINK", "https://t.me/+Vo8tTaZsz9Q5Njk9"),
         powered_by_text=os.getenv("POWERED_BY_TEXT", "Powered by Madara"),
-        banner_url=os.getenv("BANNER_URL", "https://files.catbox.moe/odeutr.png"),
+        banner_url=os.getenv("BANNER_URL", "https://files.catbox.moe/f2pcyv.jpg"),
         donate_qr=os.getenv("DONATE_QR", "https://files.catbox.moe/nx4jci.png"),
         owner_ids=_parse_owner_ids(os.getenv("OWNER_IDS", "")),
         log_level=os.getenv("LOG_LEVEL", "INFO"),

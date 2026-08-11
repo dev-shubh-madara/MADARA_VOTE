@@ -12,7 +12,7 @@ from aiogram.types import (
 from database import Database
 from keyboards.main_menu import back_to_menu_kb
 from states.post_creator import PostCreatorState
-from utils.fonts import mf, btn, pe
+from utils.fonts import mf, btn
 
 router = Router(name="post_creator")
 
@@ -40,7 +40,7 @@ async def create_post_start(callback: CallbackQuery, state: FSMContext) -> None:
     mf(
         f"📝 <b>Post Creator</b>\n\n"
         "<blockquote>"
-        f"Step {pe('one', '✨')} — Send a <b>photo</b> for your post.\n"
+        f"Step ✨ — Send a <b>photo</b> for your post.\n"
         "Or tap /skip for a text-only post."
         "</blockquote>"
     ),

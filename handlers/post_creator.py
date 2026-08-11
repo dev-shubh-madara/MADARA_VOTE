@@ -2,12 +2,17 @@ from __future__ import annotations
 
 from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
-from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message
+from aiogram.types import (
+    CallbackQuery,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    Message,
+)
 
 from database import Database
 from keyboards.main_menu import back_to_menu_kb
 from states.post_creator import PostCreatorState
-from utils.fonts import mf, btn
+from utils.fonts import mf, btn, pe
 
 router = Router(name="post_creator")
 

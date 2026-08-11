@@ -25,6 +25,7 @@ from keyboards.main_menu import (
 from states.giveaway import NewGiveawayState
 from states.payment import PaymentState
 from utils.common import display_name, ensure_channel_membership, esc, medal, parse_channel_input
+from utils.emoji import pe
 from utils.fonts import mf
 
 router = Router(name="giveaway")
@@ -373,7 +374,7 @@ async def leaderboard(callback: CallbackQuery, db: Database) -> None:
             reply_markup=back_to_menu_kb(),
         )
         return
-    text = mf(f"🏆 <b>Leaderboard — {giveaway.title}</b>\n\n")
+    text = mf(f"{pe('trophy', '🏆')} <b>Leaderboard — {giveaway.title}</b>\n\n")
     for i, r in enumerate(board):
         name = display_name(r.get("username"), r.get("full_name"), r["user_id"])
         line = f"{medal(i+1)} {name} — <b>{r['vote_count']}</b> votes"

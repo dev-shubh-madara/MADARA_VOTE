@@ -21,6 +21,7 @@ class Settings:
     donate_qr: str
     owner_ids: Tuple[int, ...]
     log_level: str
+    premium_emojis: dict[str, str]
 
 
 def _parse_owner_ids(raw: str) -> Tuple[int, ...]:
@@ -28,6 +29,21 @@ def _parse_owner_ids(raw: str) -> Tuple[int, ...]:
     if not parts:
         return ()
     return tuple(int(p) for p in parts)
+
+
+def _parse_premium_emojis(raw: str) -> dict:
+    """Parses PREMIUM_EMOJIS="name:id,name2:id2,..." into a dict.
+    Unset/blank -> empty dict, and every call site degrades to plain emoji."""
+    result: dict[str, str] = {}
+    for pair in raw.split(","):
+        pair = pair.strip()
+        if not pair or ":" not in pair:
+            continue
+        name, _, emoji_id = pair.partition(":")
+        name, emoji_id = name.strip(), emoji_id.strip()
+        if name and emoji_id:
+            result[name] = emoji_id
+    return result
 
 
 def load_settings() -> Settings:
@@ -51,4 +67,5 @@ def load_settings() -> Settings:
         donate_qr=os.getenv("DONATE_QR", "https://files.catbox.moe/nx4jci.png"),
         owner_ids=_parse_owner_ids(os.getenv("OWNER_IDS", "")),
         log_level=os.getenv("LOG_LEVEL", "INFO"),
+        premium_emojis=_parse_premium_emojis(os.getenv("PREMIUM_EMOJIS", "")),
     )

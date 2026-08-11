@@ -11,6 +11,7 @@ from aiogram.types import CallbackQuery, Message
 from config import Settings
 from database import Database
 from keyboards.main_menu import main_menu_kb, back_to_menu_kb
+from utils.emoji import pe
 from utils.fonts import mf
 
 router = Router(name="start")
@@ -61,12 +62,12 @@ async def _play_intro(message: Message) -> None:
 
 def _intro_text(settings: Settings) -> str:
     return mf(
-        "🎉 <b>Welcome to the Giveaway Manager Bot!</b>\n\n"
-        "🏆 <b>The Most Advanced Giveaway Bot on Telegram</b>\n\n"
+        f"{pe('fire', '🎉')} <b>Welcome to the Giveaway Manager Bot!</b>\n\n"
+        f"{pe('trophy', '🏆')} <b>The Most Advanced Giveaway Bot on Telegram</b>\n\n"
         "<blockquote>"
-        "✨ <b>Features:</b>\n"
+        f"{pe('star', '✨')} <b>Features:</b>\n"
         "├ 🗳 Voting Contests &amp; 🎰 Lucky Draws\n"
-        "├ 💰 Paid Votes (UPI / Telegram Stars)\n"
+        f"├ {pe('money', '💰')} Paid Votes (UPI / Telegram Stars)\n"
         "├ 🔗 Referral Bonus System\n"
         "├ 📊 Live Leaderboards\n"
         "├ 🛡 Anti-Cheat Protection\n"

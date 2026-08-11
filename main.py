@@ -11,6 +11,7 @@ from config import Settings, load_settings
 from database import Database
 from handlers import chats, giveaway, owner, post_creator, start
 from middlewares.ban import BanMiddleware
+from utils import emoji
 
 
 def setup_logging(level: str) -> None:
@@ -21,6 +22,7 @@ def setup_logging(level: str) -> None:
 
 
 async def build_dispatcher(settings: Settings) -> tuple[Dispatcher, Database]:
+    emoji.configure(settings.premium_emojis)
     db = Database(settings.mongodb_uri, settings.mongodb_db_name)
     await db.init()
     for owner_id in settings.owner_ids:

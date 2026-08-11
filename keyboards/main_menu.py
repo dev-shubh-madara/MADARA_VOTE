@@ -70,40 +70,101 @@ def back_to_menu_kb() -> InlineKeyboardMarkup:
         [InlineKeyboardButton(text=btn("🔙 Main Menu"), callback_data="menu:root")],
     ])
 
-
 # ── Giveaway Creation ──────────────────────────────────────────────────────────
+
 def giveaway_type_kb() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text=btn("🗳 Voting Contest"), callback_data="newg:type:voting", style=ButtonStyle.PRIMARY)],
-        [InlineKeyboardButton(text=btn("🎰 Lucky Draw"), callback_data="newg:type:lucky", style=ButtonStyle.PRIMARY)],
-        [InlineKeyboardButton(text=btn("🔙 Cancel"), callback_data="menu:root", style=ButtonStyle.DANGER)],
+        [
+            InlineKeyboardButton(
+                text=btn(" Voting Contest"),
+                callback_data="newg:type:voting",
+                style=ButtonStyle.PRIMARY,
+                icon_custom_emoji_id=eid("star")
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text=btn(" Lucky Draw"),
+                callback_data="newg:type:lucky",
+                style=ButtonStyle.SUCCESS,
+                icon_custom_emoji_id=eid("luckydraw")
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text=btn(" Cancel"),
+                callback_data="menu:root",
+                style=ButtonStyle.DANGER,
+                icon_custom_emoji_id=eid("back")
+            )
+        ],
     ])
 
 
 def giveaway_mode_kb() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text=btn("🆓 Free Mode"), callback_data="newg:mode:free")],
-        [InlineKeyboardButton(text=btn("💰 Paid Mode (UPI/QR)"), callback_data="newg:mode:paid",
-                               icon_custom_emoji_id=eid("money"))],
-        [InlineKeyboardButton(text=btn("⭐ Stars Mode"), callback_data="newg:mode:stars",
-                               icon_custom_emoji_id=eid("star"))],
-        [InlineKeyboardButton(text=btn("🔙 Back"), callback_data="newg:back:type")],
+        [
+            InlineKeyboardButton(
+                text=btn(" Free Mode"),
+                callback_data="newg:mode:free",
+                icon_custom_emoji_id=eid("free")
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text=btn(" Paid Mode (UPI/QR)"),
+                callback_data="newg:mode:paid",
+                icon_custom_emoji_id=eid("money")
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text=btn(" Stars Mode"),
+                callback_data="newg:mode:stars",
+                icon_custom_emoji_id=eid("tgstar")
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text=btn("🔙 Back"),
+                callback_data="newg:back:type",
+                icon_custom_emoji_id=eid("back")
+            )
+        ],
     ])
 
 
 def referral_setup_kb() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text=btn("✅ Enable Referral Bonus"), callback_data="newg:referral:yes",
-                               style=ButtonStyle.SUCCESS, icon_custom_emoji_id=eid("check"))],
-        [InlineKeyboardButton(text=btn("❌ No Referral"), callback_data="newg:referral:no", style=ButtonStyle.DANGER)],
+        [
+            InlineKeyboardButton(
+                text=btn("✅ Enable Referral Bonus"),
+                callback_data="newg:referral:yes",
+                style=ButtonStyle.SUCCESS,
+                icon_custom_emoji_id=eid("check")
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text=btn("❌ No Referral"),
+                callback_data="newg:referral:no",
+                style=ButtonStyle.DANGER,
+                icon_custom_emoji_id=eid("cross")
+            )
+        ],
     ])
 
 
 def skip_kb(callback_data: str) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text=btn("⏭ Skip"), callback_data=callback_data)],
+        [
+            InlineKeyboardButton(
+                text=btn(" Skip"),
+                callback_data=callback_data,
+                icon_custom_emoji_id=eid("skip")
+            )
+        ],
     ])
-
 
 # ── Manage Giveaway ────────────────────────────────────────────────────────────
 def manage_giveaway_kb(giveaway_id: int, giveaway_type: str = "voting", paid: bool = True, referral: bool = False) -> InlineKeyboardMarkup:

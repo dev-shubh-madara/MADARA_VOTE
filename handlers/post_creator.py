@@ -32,14 +32,14 @@ async def create_post_start(callback: CallbackQuery, state: FSMContext) -> None:
     await state.set_state(PostCreatorState.photo)
     await callback.answer()
     await callback.message.answer(
-        mf(
-            "📝 <b>Post Creator</b>\n\n"
-            "<blockquote>"
-            "Step f{pe('one', '✨')} — Send a <b>photo</b> for your post.\n"
-            "Or tap /skip for a text-only post."
-            "</blockquote>"
-        ),
-    )
+    mf(
+        f"📝 <b>Post Creator</b>\n\n"
+        "<blockquote>"
+        f"Step {pe('one', '✨')} — Send a <b>photo</b> for your post.\n"
+        "Or tap /skip for a text-only post."
+        "</blockquote>"
+    ),
+)
 
 
 @router.message(PostCreatorState.photo, F.photo)

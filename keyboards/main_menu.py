@@ -8,28 +8,61 @@ from utils.fonts import btn
 
 
 # ── Main Menu ──────────────────────────────────────────────────────────────────
+
 def main_menu_kb() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text=btn(" New Giveaway"), callback_data="menu:new_giveaway",
-                                  style=ButtonStyle.PRIMARY, icon_custom_emoji_id=eid("rocket")),
-            InlineKeyboardButton(text=btn(" My Giveaways"), callback_data="menu:my_giveaways",
-                                  style=ButtonStyle.DANGER, icon_custom_emoji_id=eid("fire")),
+            InlineKeyboardButton(
+                text=btn(" New Giveaway"),
+                callback_data="menu:new_giveaway",
+                style=ButtonStyle.PRIMARY,
+                icon_custom_emoji_id=eid("rocket")
+            ),
+            InlineKeyboardButton(
+                text=btn(" My Giveaways"),
+                callback_data="menu:my_giveaways",
+                style=ButtonStyle.DANGER,
+                icon_custom_emoji_id=eid("fire")
+            ),
         ],
         [
-            InlineKeyboardButton(text=btn(" Add Channel"), callback_data="menu:add_channel",
-                                style=ButtonStyle.DANGER, icon_custom_emoji_id=eid("add")),
-            InlineKeyboardButton(text=btn(" Create Post"), callback_data="menu:create_post",
-                                style=ButtonStyle.PRIMARY, icon_custom_emoji_id=eid("display"))),
+            InlineKeyboardButton(
+                text=btn(" Add Channel"),
+                callback_data="menu:add_channel",
+                style=ButtonStyle.DANGER,
+                icon_custom_emoji_id=eid("add")
+            ),
+            InlineKeyboardButton(
+                text=btn(" Create Post"),
+                callback_data="menu:create_post",
+                style=ButtonStyle.PRIMARY,
+                icon_custom_emoji_id=eid("display")
+            ),
         ],
         [
-            InlineKeyboardButton(text=btn(" How To Use"), callback_data="menu:how_to_use",
-                                style=ButtonStyle.PRIMARY, icon_custom_emoji_id=eid("book")),
-            InlineKeyboardButton(text=btn(" Donate"), callback_data="menu:donate",
-                                style=ButtonStyle.DANGER, icon_custom_emoji_id=eid("heart")),
+            InlineKeyboardButton(
+                text=btn(" How To Use"),
+                callback_data="menu:how_to_use",
+                style=ButtonStyle.PRIMARY,
+                icon_custom_emoji_id=eid("book")
+            ),
+            InlineKeyboardButton(
+                text=btn(" Donate"),
+                callback_data="menu:donate",
+                style=ButtonStyle.DANGER,
+                icon_custom_emoji_id=eid("heart")
+            ),
         ],
-        [InlineKeyboardButton(text=btn(" Support"), callback_data="menu:support",style=ButtonStyle.SUCCESS, icon_custom_emoji_id=eid("sos"))],
+        [
+            InlineKeyboardButton(
+                text=btn(" Support"),
+                callback_data="menu:support",
+                style=ButtonStyle.SUCCESS,
+                icon_custom_emoji_id=eid("sos")
+            )
+        ],
     ])
+
 
 
 def back_to_menu_kb() -> InlineKeyboardMarkup:
